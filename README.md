@@ -2,6 +2,19 @@
 
 A web application supporting UN Sustainable Development Goal 13: Climate Action by helping users track and reduce their carbon footprint.
 
+## Quick Start
+
+1. Start the application:
+```bash
+./start-app.sh
+```
+This will start all services and open the application in your browser.
+
+2. Stop the application:
+```bash
+./stop-app.sh
+```
+
 ## Features
 
 - Personal carbon footprint calculator
@@ -18,28 +31,16 @@ A web application supporting UN Sustainable Development Goal 13: Climate Action 
 - Containerization: Docker
 - Styling: Tailwind CSS
 
+## Access Points
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:4000
+- MongoDB: mongodb://localhost:27017
+
 ## Prerequisites
 
 - Docker
 - Docker Compose
-- Node.js (v18 or higher)
-- npm or yarn
-
-## Project Structure
-
-```
-carbon-tracker-project/
-├── frontend/           # React TypeScript frontend
-├── backend/           # Node.js Express backend
-├── docker-compose.yml # Docker composition
-└── README.md         # This file
-```
-
-## Getting Started
-
-1. Clone the repository
-2. Run `docker-compose up --build`
-3. Access the application at `http://localhost:3000`
 
 ## Development
 
