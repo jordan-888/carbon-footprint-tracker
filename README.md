@@ -33,8 +33,8 @@ This will start all services and open the application in your browser.
 
 ## Access Points
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:4000
+- Frontend: http://localhost
+- Backend API: http://localhost/api
 - MongoDB: mongodb://localhost:27017
 
 ## Prerequisites
@@ -50,9 +50,9 @@ This will start all services and open the application in your browser.
 
 ## Nginx Integration
 
-This project can be integrated with Nginx for production deployment. The Nginx configuration is available in a separate repository:
+This project uses Nginx for production deployment. The Nginx configuration is available in a separate repository:
 
-- [Carbon Tracker Nginx](https://github.com/yourusername/carbon-tracker-nginx)
+- [Carbon Tracker Nginx](https://github.com/jordan-888/carbon-tracker-nginx)
 
 ## Contributing
 
