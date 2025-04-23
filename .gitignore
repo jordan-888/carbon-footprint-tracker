@@ -30,4 +30,13 @@ yarn-error.log*
 *.swo
 
 # Docker
-.docker/ 
+.docker/
+
+# OS specific
+Thumbs.db
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo 

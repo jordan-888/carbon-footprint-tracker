@@ -1,89 +1,253 @@
-import { useState } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import React, { useEffect, useState } from 'react';
+import { 
+  Box, 
+  Grid, 
+  Paper, 
+  Typography, 
+  Card, 
+  CardContent, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  Divider,
+  CircularProgress
+} from '@mui/material';
+import { 
+  Timeline as TimelineIcon, 
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  LocalShipping as TransportIcon,
+  Home as HomeIcon,
+  Restaurant as FoodIcon,
+  Delete as WasteIcon
+} from '@mui/icons-material';
+import { Line } from 'react-chartjs-2';
+import { format } from 'date-fns';
+import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-interface EmissionData {
-  transport: number;
-  energy: number;
-  food: number;
-  shopping: number;
+interface CarbonData {
+  total: {
+    value: number;
+    unit: string;
+  };
+  byType: {
+    [key: string]: number;
+  };
 }
 
-const Dashboard = () => {
-  const [emissions] = useState<EmissionData>({
-    transport: 2.5,
-    energy: 1.8,
-    food: 1.2,
-    shopping: 0.8,
-  });
+interface Activity {
+  _id: string;
+  type: string;
+  category: string;
+  description: string;
+  amount: {
+    value: number;
+    unit: string;
+  };
+  carbonFootprint: {
+    value: number;
+    unit: string;
+  };
+  date: string;
+}
 
-  const chartData = {
-    labels: ['Transport', 'Energy', 'Food', 'Shopping'],
-    datasets: [
-      {
-        data: Object.values(emissions),
-        backgroundColor: [
-          'rgba(34, 197, 94, 0.8)',
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(249, 115, 22, 0.8)',
-          'rgba(168, 85, 247, 0.8)',
-        ],
-        borderColor: [
-          'rgba(34, 197, 94, 1)',
-          'rgba(59, 130, 246, 1)',
-          'rgba(249, 115, 22, 1)',
-          'rgba(168, 85, 247, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
+const Dashboard: React.FC = () => {
+  const { token } = useAuth();
+  const [carbonData, setCarbonData] = useState<CarbonData | null>(null);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch carbon footprint data
+        const carbonResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}/carbon/total`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        setCarbonData(carbonResponse.data);
+        
+        // Fetch recent activities
+        const activitiesResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}/activities`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { limit: 5 }
+          }
+        );
+        setRecentActivities(activitiesResponse.data);
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'transport':
+        return <TransportIcon />;
+      case 'energy':
+        return <HomeIcon />;
+      case 'food':
+        return <FoodIcon />;
+      case 'waste':
+        return <WasteIcon />;
+      default:
+        return <TimelineIcon />;
+    }
   };
 
-  const totalEmissions = Object.values(emissions).reduce((a, b) => a + b, 0);
+  const getChartData = () => {
+    if (!carbonData) return null;
+    
+    const labels = Object.keys(carbonData.byType);
+    const data = Object.values(carbonData.byType);
+    
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Carbon Footprint by Category',
+          data,
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.5)',
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(255, 206, 86, 0.5)',
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(153, 102, 255, 0.5)',
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+          ],
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          Carbon Footprint Dashboard
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">
-              Emissions Breakdown
-            </h2>
-            <div className="w-full max-w-md mx-auto">
-              <Doughnut data={chartData} />
-            </div>
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">
-              Summary
-            </h2>
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-600">Total Emissions</p>
-                <p className="text-3xl font-bold text-primary-600">
-                  {totalEmissions.toFixed(1)} tonnes CO2e
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries(emissions).map(([category, value]) => (
-                  <div key={category} className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-gray-600 capitalize">{category}</p>
-                    <p className="text-xl font-semibold text-gray-900">
-                      {value.toFixed(1)} tonnes
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Dashboard
+      </Typography>
+      
+      {/* Carbon Footprint Overview */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>
+              Total Carbon Footprint
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+              <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                <CircularProgress
+                  variant="determinate"
+                  value={100}
+                  size={120}
+                  thickness={4}
+                  sx={{ color: 'grey.200' }}
+                />
+                <CircularProgress
+                  variant="determinate"
+                  value={70}
+                  size={120}
+                  thickness={4}
+                  sx={{ position: 'absolute', color: 'primary.main' }}
+                />
+                <Box
+                  sx={{
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography variant="h4" component="div" color="text.secondary">
+                    {carbonData?.total.value.toFixed(1)} {carbonData?.total.unit}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>
+              Carbon Footprint by Category
+            </Typography>
+            <Box sx={{ height: '200px' }}>
+              {getChartData() && <Line data={getChartData()!} options={{ maintainAspectRatio: false }} />}
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+      
+      {/* Recent Activities */}
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Recent Activities
+        </Typography>
+        <List>
+          {recentActivities.length > 0 ? (
+            recentActivities.map((activity, index) => (
+              <React.Fragment key={activity._id}>
+                <ListItem>
+                  <Box sx={{ mr: 2 }}>
+                    {getActivityIcon(activity.type)}
+                  </Box>
+                  <ListItemText
+                    primary={activity.description}
+                    secondary={`${activity.amount.value} ${activity.amount.unit} - ${activity.carbonFootprint.value.toFixed(2)} ${activity.carbonFootprint.unit} - ${format(new Date(activity.date), 'MMM d, yyyy')}`}
+                  />
+                </ListItem>
+                {index < recentActivities.length - 1 && <Divider />}
+              </React.Fragment>
+            ))
+          ) : (
+            <ListItem>
+              <ListItemText primary="No activities recorded yet" />
+            </ListItem>
+          )}
+        </List>
+      </Paper>
+    </Box>
   );
 };
 

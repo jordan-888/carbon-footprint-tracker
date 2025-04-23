@@ -1,0 +1,120 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Frontend Dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Build Frontend
+      working-directory: ./frontend
+      run: npm run build
+
+    - name: Test Frontend
+      working-directory: ./frontend
+      run: npm test
+
+    - name: Install Backend Dependencies
+      working-directory: ./backend
+      run: npm ci
+
+    - name: Build Backend
+      working-directory: ./backend
+      run: npm run build
+
+    - name: Test Backend
+      working-directory: ./backend
+      run: npm test
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build Docker images
+      run: docker-compose build
+
+    - name: Start services
+      run: docker-compose up -d
+
+    - name: Wait for services to be ready
+      run: sleep 30
+
+    - name: Check running containers
+      run: docker ps
+
+    - name: Run integration tests
+      run: |
+        curl -f http://localhost:4000/health || exit 1
+        curl -f http://localhost:3000 || exit 1
+
+    - name: Stop services
+      run: docker-compose down
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Frontend Dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Build Frontend
+      working-directory: ./frontend
+      run: npm run build
+      env:
+        REACT_APP_API_URL: ${{ secrets.FIREBASE_API_URL }}
+
+    - name: Install Firebase CLI
+      run: npm install -g firebase-tools
+
+    - name: Deploy to Firebase
+      run: |
+        firebase deploy --token "$FIREBASE_TOKEN" --non-interactive --only hosting
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+    - name: Deploy Backend to Cloud Run
+      uses: google-github-actions/deploy-cloudrun@v1
+      with:
+        service: carbon-tracker-backend
+        region: us-central1
+        source: ./backend
+        credentials: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Update API URL in Firebase config
+      run: |
+        BACKEND_URL=$(gcloud run services describe carbon-tracker-backend --platform managed --region us-central1 --format 'value(status.url)')
+        echo "REACT_APP_API_URL=$BACKEND_URL" >> ./frontend/.env
+      env:
+        GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }} 
