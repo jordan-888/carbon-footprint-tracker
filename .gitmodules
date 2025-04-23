@@ -1,0 +1,3 @@
+[submodule "nginx-server"]
+	path = nginx-server
+	url = https://github.com/jordan-888/carbon-tracker-nginx.git
