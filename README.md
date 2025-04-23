@@ -48,6 +48,12 @@ This will start all services and open the application in your browser.
 - Backend API: `http://localhost:4000`
 - MongoDB: `mongodb://localhost:27017`
 
+## Nginx Integration
+
+This project can be integrated with Nginx for production deployment. The Nginx configuration is available in a separate repository:
+
+- [Carbon Tracker Nginx](https://github.com/yourusername/carbon-tracker-nginx)
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

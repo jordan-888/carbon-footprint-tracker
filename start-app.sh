@@ -7,9 +7,17 @@ docker-compose up --build -d
 echo "Starting services..."
 sleep 10
 
+# Start the Nginx service if it's not already running
+if [ ! "$(docker ps -q -f name=nginx-server-nginx-1)" ]; then
+  echo "Starting Nginx service..."
+  cd nginx-server
+  docker-compose up -d
+  cd ..
+fi
+
 # Open the application in the default browser
 echo "Opening application in browser..."
-open http://localhost:3000
+open http://localhost
 
 # Show the logs
 docker-compose logs -f 
