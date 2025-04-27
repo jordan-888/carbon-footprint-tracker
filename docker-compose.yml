@@ -3,8 +3,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=http://localhost:4000
     ports:
       - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:4000
     depends_on:
       - backend
 
@@ -28,4 +32,4 @@ services:
       - mongodb_data:/data/db
 
 volumes:
-  mongodb_data: 
+  mongodb_data:

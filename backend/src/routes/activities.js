@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Activity = require('../models/Activity');
 const auth = require('../middleware/auth');
+const { calculateCarbonFootprint } = require('../services/carbonCalculator');
+const mongoose = require('mongoose');
 
 // Get all activities for a user
 router.get('/', auth, async (req, res) => {
@@ -9,6 +11,39 @@ router.get('/', auth, async (req, res) => {
     const activities = await Activity.find({ user: req.user.userId })
       .sort({ date: -1 });
     res.json(activities);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get activities summary
+router.get('/summary', auth, async (req, res) => {
+  try {
+    const summary = await Activity.aggregate([
+      { 
+        $match: { 
+          user: new mongoose.Types.ObjectId(req.user.userId) 
+        } 
+      },
+      {
+        $group: {
+          _id: '$type',
+          totalCarbon: { $sum: '$carbonFootprint.value' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    const total = summary.reduce((acc, curr) => acc + curr.totalCarbon, 0);
+    
+    res.json({
+      byType: summary,
+      total: {
+        value: parseFloat(total.toFixed(2)),
+        unit: 'kgCO2e'
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -23,10 +58,12 @@ router.post('/', auth, async (req, res) => {
       category,
       description,
       amount,
-      carbonFootprint,
       location,
       metadata
     } = req.body;
+
+    // Calculate carbon footprint
+    const carbonFootprint = calculateCarbonFootprint(type, category, amount);
 
     const activity = new Activity({
       user: req.user.userId,
@@ -59,9 +96,17 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Activity not found' });
     }
 
+    // Calculate carbon footprint
+    const carbonFootprint = calculateCarbonFootprint(req.body.type, req.body.category, req.body.amount);
+
     const updatedActivity = await Activity.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
+      { 
+        $set: {
+          ...req.body,
+          carbonFootprint
+        }
+      },
       { new: true }
     );
 
@@ -84,8 +129,8 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Activity not found' });
     }
 
-    await activity.remove();
-    res.json({ message: 'Activity removed' });
+    await Activity.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Activity deleted' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -100,7 +145,7 @@ router.get('/stats', auth, async (req, res) => {
       {
         $group: {
           _id: '$type',
-          totalCarbon: { $sum: '$carbonFootprint.value' },
+          totalCarbon: { $sum: '$carbonFootprint' },
           count: { $sum: 1 }
         }
       }
@@ -113,4 +158,4 @@ router.get('/stats', auth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

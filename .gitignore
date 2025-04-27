@@ -39,4 +39,26 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Security
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.cer
+*.der
+*.priv
+*.pub
+*.id_rsa
+*.id_ecdsa
+*.id_ed25519
+*_rsa
+*_ecdsa
+*_ed25519
+*.env
+*.env.*
+!.env.example 
