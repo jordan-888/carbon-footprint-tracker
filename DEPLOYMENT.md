@@ -1,110 +1,235 @@
 # Carbon Tracker Deployment Guide
 
-This guide will help you deploy the Carbon Tracker application to your own server using CI/CD with GitHub Actions.
+This guide covers the deployment process for the Carbon Tracker application.
 
-## Prerequisites
+## Architecture Overview
 
-- A GitHub account
-- A server with SSH access
-- A domain name (optional, for SSL)
+- Frontend: React SPA with Material-UI and Tailwind CSS
+- Backend: Node.js/Express REST API
+- Database: MongoDB
+- Proxy: Nginx reverse proxy
+- Containers: Docker with Compose
 
-## Step 1: Set Up GitHub Secrets
+## Local Development Environment
 
-1. Go to your GitHub repository
-2. Navigate to Settings → Secrets and Variables → Actions
-3. Add the following secrets:
-   - `SERVER_HOST`: Your server's IP address or hostname
-   - `SERVER_USERNAME`: Your server's SSH username
-   - `SERVER_SSH_KEY`: Your SSH private key (the content of `~/.ssh/github_actions_deploy`)
+### Prerequisites
+- Docker and Docker Compose
+- Node.js 16+
+- Git
 
-## Step 2: Set Up Your Server
+### Quick Start
+```bash
+# Clone and start
+git clone <repository-url>
+cd carbon-tracker-project
+docker-compose up --build
+```
 
-1. SSH into your server:
-   ```bash
-   ssh your-username@your-server-ip
-   ```
+Access:
+- Frontend: http://localhost
+- API: http://localhost/api
+- MongoDB: mongodb://localhost:27017
 
-2. Add the GitHub Actions public key to your server:
-   ```bash
-   mkdir -p ~/.ssh
-   chmod 700 ~/.ssh
-   echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMDWwUK1TJte4jHJZLpJmr4t/rwnlIyMsXGaSCyv6hAy github-actions-deploy" >> ~/.ssh/authorized_keys
-   chmod 600 ~/.ssh/authorized_keys
-   ```
+## Production Deployment
 
-## Step 3: Deploy the Application
+### Prerequisites
+- Docker and Docker Compose installed on production server
+- Domain name with DNS configured
+- SSL certificate (recommended)
+- MongoDB instance (local or Atlas)
 
-1. On your local machine, set your server information:
-   ```bash
-   export SERVER_HOST="your-server-ip"
-   export SERVER_USERNAME="your-username"
-   ```
+### Environment Configuration
 
-2. Run the setup script:
-   ```bash
-   ./setup-server.sh
-   ```
+1. Create production environment files:
+```bash
+cp .env.example .env.production
+```
 
-3. Test the connection:
-   ```bash
-   ./test-connection.sh
-   ```
+2. Configure production variables:
+```env
+# Backend
+MONGODB_URI=mongodb://your-production-mongodb-uri
+JWT_SECRET=your-secure-jwt-secret
+NODE_ENV=production
 
-4. Trigger the deployment:
-   ```bash
-   ./trigger-deployment.sh
-   ```
+# Frontend
+REACT_APP_API_URL=https://your-domain.com/api
+```
 
-## Step 4: Set Up DNS (Optional)
+### Deployment Steps
 
-If you have a domain name, you can set up DNS:
+1. Build production images:
+```bash
+docker-compose -f docker-compose.prod.yml build
+```
 
-1. Run the DNS setup script:
-   ```bash
-   ./carbon-tracker-nginx/dns-setup.sh your-domain.com
-   ```
+2. Start services:
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-2. Add the DNS records to your domain registrar
+3. Verify deployment:
+```bash
+docker-compose ps
+curl https://your-domain.com/health
+```
 
-3. After DNS propagation (can take up to 48 hours), set up SSL:
-   ```bash
-   ./carbon-tracker-nginx/setup-ssl.sh your-domain.com
-   ```
+## SSL/TLS Configuration
 
-## Step 5: Monitor Your Deployment
+1. Using Certbot with Nginx:
+```bash
+apt-get update
+apt-get install certbot python3-certbot-nginx
+certbot --nginx -d your-domain.com
+```
 
-1. Check the GitHub Actions tab in your repository for deployment status
+2. Manual certificate configuration:
+```bash
+# Generate certificate
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/ssl/private/nginx-selfsigned.key \
+  -out /etc/ssl/certs/nginx-selfsigned.crt
 
-2. Monitor your server:
-   ```bash
-   ./carbon-tracker-nginx/monitor.sh
-   ```
+# Configure Nginx
+nano /etc/nginx/conf.d/default.conf
+```
+
+## Database Management
+
+### Backups
+
+1. Create backup:
+```bash
+docker exec mongodb mongodump --out /backup/$(date +%Y%m%d)
+```
+
+2. Restore from backup:
+```bash
+docker exec mongodb mongorestore /backup/20250428
+```
+
+### Migration
+
+1. Export data:
+```bash
+mongoexport --db carbon-tracker --collection activities \
+  --out activities.json
+```
+
+2. Import to new instance:
+```bash
+mongoimport --db carbon-tracker --collection activities \
+  --file activities.json
+```
+
+## Monitoring and Maintenance
+
+### Health Checks
+
+- Frontend: https://your-domain.com/health
+- Backend: https://your-domain.com/api/health
+- MongoDB: Check connection in logs
+
+### Log Management
+
+View logs:
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f backend
+```
+
+### Resource Monitoring
+
+```bash
+# Container stats
+docker stats
+
+# Disk usage
+docker system df
+```
 
 ## Troubleshooting
 
-If you encounter issues:
+### Common Issues
 
-1. Check the GitHub Actions logs
-2. Check the server logs:
-   ```bash
-   docker-compose -f /opt/carbon-tracker/docker-compose.prod.yml logs
-   ```
-3. Check the Nginx logs:
-   ```bash
-   docker-compose -f /opt/carbon-tracker/docker-compose.prod.yml logs nginx
-   ```
+1. Connection refused:
+   - Check container status
+   - Verify network configuration
+   - Confirm port mappings
 
-## Updating Your Application
+2. Database connection failed:
+   - Verify MongoDB URI
+   - Check network connectivity
+   - Validate credentials
 
-To update your application:
+3. SSL/TLS issues:
+   - Verify certificate paths
+   - Check certificate validity
+   - Confirm Nginx configuration
 
-1. Make changes to your code
-2. Commit and push to GitHub
-3. GitHub Actions will automatically deploy the changes
+### Quick Fixes
+
+```bash
+# Restart services
+docker-compose restart
+
+# Rebuild containers
+docker-compose up --build -d
+
+# Clear volumes
+docker-compose down -v
+```
 
 ## Security Considerations
 
-- Keep your SSH keys secure
-- Regularly update your server
-- Monitor your application logs
-- Set up a firewall on your server 
+1. Environment Variables:
+   - Use secure secrets
+   - Never commit .env files
+   - Rotate credentials regularly
+
+2. Network Security:
+   - Configure firewalls
+   - Use SSL/TLS
+   - Implement rate limiting
+
+3. Database Security:
+   - Strong authentication
+   - Regular backups
+   - Access control
+
+## Performance Optimization
+
+1. Frontend:
+   - Enable compression
+   - Configure caching
+   - Optimize bundle size
+
+2. Backend:
+   - Implement caching
+   - Optimize queries
+   - Use connection pooling
+
+3. Database:
+   - Create indexes
+   - Monitor query performance
+   - Regular maintenance
+
+## Continuous Integration/Deployment
+
+1. Automated testing
+2. Image building
+3. Deployment verification
+4. Rollback procedures
+
+## Support
+
+For issues and support:
+1. Check logs
+2. Review documentation
+3. Contact maintainers
+4. Submit issue ticket
+
+Remember to always backup data before major changes and test in staging environment first.

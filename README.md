@@ -1,140 +1,153 @@
 # Carbon Footprint Tracker
 
-A comprehensive web application for tracking and managing your carbon footprint, supporting UN Sustainable Development Goal 13: Climate Action.
+A modern web application to track and analyze your carbon footprint with an intuitive user interface and comprehensive data visualization.
 
 ## Features
 
-- User Authentication
-  - Secure registration and login
-  - JWT-based authentication
-  - Profile management
-
-- Activity Tracking
-  - Track various types of activities:
-    - Transport (car, bus, train, plane)
-    - Energy consumption (electricity, gas, oil)
-    - Food consumption (meat, dairy, vegetables)
-  - Automatic carbon footprint calculation
-  - Historical data tracking
-
-- Carbon Footprint Analytics
-  - Total carbon footprint calculation
-  - Breakdown by activity type
-  - Historical trends
-  - Environmental impact assessment
+- 🌟 Modern, responsive UI with Material-UI and Tailwind CSS
+- 📊 Interactive data visualization using Chart.js
+- 🔐 Secure user authentication with JWT
+- 📱 Mobile-friendly design with responsive layout
+- 🔄 Real-time carbon footprint calculations
+- 📈 Personalized analytics and insights
+- 🎨 Customized theme with environmental color palette
+- 📱 Progressive Web App (PWA) support
+- 🔒 MongoDB persistence with secure data storage
 
 ## Tech Stack
 
-### Frontend
-- React.js with TypeScript
-- Material-UI for components
-- Axios for API calls
-- JWT for authentication
+- Frontend:
+  - React 18 with TypeScript
+  - Material-UI (MUI) for core components
+  - Tailwind CSS for custom styling
+  - Chart.js for data visualization
+  - Formik & Yup for form validation
 
-### Backend
-- Node.js with Express
-- MongoDB for data storage
-- JWT for authentication
-- RESTful API design
+- Backend:
+  - Node.js with Express
+  - MongoDB for data persistence
+  - JWT for authentication
+  - TypeScript support
 
-### Infrastructure
-- Docker and Docker Compose
-- Nginx reverse proxy
-- GitHub Actions for CI/CD
-- GitHub Container Registry
+- Infrastructure:
+  - Docker and Docker Compose
+  - Nginx for reverse proxy
+  - GitHub Actions for CI/CD (optional)
 
 ## Quick Start
 
 1. Clone the repository:
    ```bash
-   git clone --recursive https://github.com/jordan-888/docker-carbon-footprint-tracker.git
-   cd docker-carbon-footprint-tracker
+   git clone https://github.com/yourusername/carbon-tracker-project.git
+   cd carbon-tracker-project
    ```
 
-2. Start the application:
+2. Start with Docker Compose:
    ```bash
-   ./start-app.sh
+   docker-compose up --build
    ```
 
 3. Access the application:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:4000
-   - MongoDB: mongodb://localhost:27017
+   - Frontend: http://localhost
+   - Backend API: http://localhost/api
 
-## Development
+## Development Setup
 
 ### Prerequisites
-- Node.js v18+
+- Node.js 16+
 - Docker and Docker Compose
+- MongoDB (if running locally)
 - Git
 
 ### Environment Variables
-Create `.env` files in both frontend and backend directories:
 
-Frontend (.env):
+Create a .env file in both frontend and backend directories:
+
+#### Frontend (.env)
 ```
-REACT_APP_API_URL=http://localhost:4000
+REACT_APP_API_URL=http://localhost/api
 ```
 
-Backend (.env):
+#### Backend (.env)
 ```
-MONGODB_URI=mongodb://mongo:27017/carbon_tracker
-JWT_SECRET=your_jwt_secret
+MONGODB_URI=mongodb://mongo:27017/carbon-tracker
+JWT_SECRET=your-secret-key
+PORT=4000
 ```
 
 ### Running Locally
+
+1. Install dependencies:
+   ```bash
+   # Frontend dependencies
+   cd frontend && npm install
+   
+   # Backend dependencies
+   cd backend && npm install
+   ```
+
+2. Start with Docker Compose:
+   ```bash
+   docker-compose up --build
+   ```
+
+3. For development without Docker:
+   ```bash
+   # Start MongoDB
+   mongod
+
+   # Start backend (in backend directory)
+   npm run dev
+
+   # Start frontend (in frontend directory)
+   npm start
+   ```
+
+## Testing
+
+Run tests for both frontend and backend:
 ```bash
-# Start all services
-docker-compose up -d
+# Frontend tests
+cd frontend && npm test
 
-# Frontend only
-cd frontend
-npm install
-npm start
-
-# Backend only
-cd backend
-npm install
-npm start
+# Backend tests
+cd backend && npm test
 ```
 
-## API Endpoints
+## Project Structure
 
-### Authentication
-- POST /api/auth/register - Register new user
-- POST /api/auth/login - User login
-- GET /api/auth/me - Get user profile
-
-### Activities
-- GET /api/activities - List activities
-- POST /api/activities - Create activity
-- PUT /api/activities/:id - Update activity
-- DELETE /api/activities/:id - Delete activity
-- GET /api/activities/summary - Get carbon footprint summary
-
-## Deployment
-
-The application is deployed using GitHub Actions. Required secrets:
-
-- `SERVER_HOST`: Production server hostname
-- `SERVER_USERNAME`: SSH username
-- `SERVER_SSH_KEY`: SSH private key
-- `JWT_SECRET`: JWT secret for production
+```
+├── frontend/                # React TypeScript frontend
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── contexts/       # React contexts (Auth, etc)
+│   │   ├── pages/         # Page components
+│   │   └── theme.ts       # MUI theme configuration
+│   └── ...
+├── backend/                # Node.js Express backend
+│   ├── src/
+│   │   ├── routes/        # API routes
+│   │   ├── models/        # Mongoose models
+│   │   └── middleware/    # Custom middleware
+│   └── ...
+└── docker-compose.yml     # Docker composition
+```
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Commit your changes
-4. Push to the branch
+4. Push to your branch
 5. Create a Pull Request
 
 ## License
 
-This project is licensed under the MIT License.
+MIT License - See LICENSE file for details
 
 ## Acknowledgments
 
-- UN SDG 13: Climate Action
-- Carbon footprint calculation factors from verified sources
-- Open-source community and contributors
+- Material-UI for the component library
+- Chart.js for data visualization
+- MongoDB team for the database
+- All contributors who have helped to improve this project

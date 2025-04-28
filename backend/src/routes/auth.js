@@ -7,32 +7,58 @@ const auth = require('../middleware/auth');
 // Register new user
 router.post('/register', async (req, res) => {
   try {
+    console.log('Registration attempt details:', {
+      body: req.body,
+      headers: req.headers,
+      url: req.url
+    });
+
     const { email, password, name } = req.body;
 
-    // Check if user already exists
+    // Validate input
+    if (!name) {
+      console.log('Registration failed: Missing name');
+      return res.status(400).json({ message: 'Name is required' });
+    }
+    if (!email) {
+      console.log('Registration failed: Missing email');
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    if (!password) {
+      console.log('Registration failed: Missing password');
+      return res.status(400).json({ message: 'Password is required' });
+    }
+
+    console.log('Checking for existing user with email:', email);
     let user = await User.findOne({ email });
+    
     if (user) {
+      console.log('User found:', user);
       return res.status(400).json({ message: 'User already exists' });
     }
 
     // Create new user
+    console.log('Creating new user with:', { name, email });
     user = new User({
       email,
       password,
       name
     });
 
+    console.log('Saving user to database...');
     await user.save();
+    console.log('User saved successfully:', user._id);
 
-    // Generate JWT token
+    // Generate JWT token with the correct userId field
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
 
+    console.log('Registration successful, sending response');
     res.status(201).json({
-      token,
+      token,  // Send the token
       user: {
         id: user._id,
         name: user.name,
@@ -40,8 +66,25 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Registration error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      errors: error.errors
+    });
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: Object.values(error.errors).map(err => err.message).join(', ')
+      });
+    }
+    
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+    
+    res.status(500).json({ message: 'Registration failed. Please try again.' });
   }
 });
 
@@ -98,4 +141,4 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

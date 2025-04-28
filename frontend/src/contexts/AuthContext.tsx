@@ -10,7 +10,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -29,40 +29,41 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       setToken(storedToken);
-      fetchUser(storedToken);
+      axios.get(`${process.env.REACT_APP_API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` }
+      })
+        .then(res => {
+          setUser(res.data);
+          setLoading(false);
+        })
+        .catch(() => {
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('token');
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
     }
   }, []);
 
-  const fetchUser = async (authToken: string) => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-      setUser(response.data);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      logout();
-    }
-  };
-
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
-        email,
-        password
-      });
-      const { token: newToken, user: userData } = response.data;
-      setToken(newToken);
-      setUser(userData);
-      localStorage.setItem('token', newToken);
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, { email, password });
+      localStorage.setItem('token', response.data.token);
+      setUser(response.data.user);
+      setToken(response.data.token);
+      console.log('Auth state updated:', { user: response.data.user, token: response.data.token });
+      localStorage.setItem('auth_debug', JSON.stringify({ user: response.data.user, token: response.data.token }));
+      return true;
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      return false;
     }
   };
 
@@ -73,13 +74,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password
       });
+      
+      // On successful registration, set the user state and token
       const { token: newToken, user: userData } = response.data;
       setToken(newToken);
       setUser(userData);
       localStorage.setItem('token', newToken);
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
+      return; // Success case
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Registration failed. Please try again.';
+      throw new Error(message);
     }
   };
 
@@ -87,7 +91,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
+    console.log('Auth state updated:', { user: null, token: null });
+    localStorage.setItem('auth_debug', JSON.stringify({ user: null, token: null }));
   };
+
+  if (loading) return <div>Loading...</div>;
 
   const value = {
     user,
@@ -95,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     register,
     logout,
-    isAuthenticated: !!token
+    isAuthenticated: !!token,
   };
 
   return (
@@ -103,4 +111,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   );
-}; 
+};

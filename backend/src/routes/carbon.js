@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const Activity = require('../models/Activity');
 
 // Carbon emission factors (kg CO2e per unit)
 const EMISSION_FACTORS = {

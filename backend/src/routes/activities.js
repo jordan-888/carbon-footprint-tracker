@@ -8,9 +8,27 @@ const mongoose = require('mongoose');
 // Get all activities for a user
 router.get('/', auth, async (req, res) => {
   try {
-    const activities = await Activity.find({ user: req.user.userId })
-      .sort({ date: -1 });
-    res.json(activities);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const type = req.query.type;
+
+    const query = { user: req.user.userId };
+    if (type) {
+      query.type = type;
+    }
+
+    const activities = await Activity.find(query)
+      .sort({ date: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const total = await Activity.countDocuments(query);
+
+    res.json({
+      activities,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

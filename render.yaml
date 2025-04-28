@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: carbon-tracker-backend
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+    healthCheckPath: /health
+    
+databases:
+  - name: carbon-tracker-mongodb
+    databaseName: carbon_tracker
+    ipAllowList: []

@@ -1,4 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import { 
   Box, 
   Grid, 
@@ -25,6 +35,16 @@ import { Line } from 'react-chartjs-2';
 import { format } from 'date-fns';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface CarbonData {
   total: {
@@ -60,6 +80,7 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('Dashboard mounted - Token:', token);
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -213,7 +234,27 @@ const Dashboard: React.FC = () => {
               Carbon Footprint by Category
             </Typography>
             <Box sx={{ height: '200px' }}>
-              {getChartData() && <Line data={getChartData()!} options={{ maintainAspectRatio: false }} />}
+              {getChartData() && <Line 
+                data={getChartData()!} 
+                options={{
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: 'kgCO2e'
+                      }
+                    },
+                    x: {
+                      title: {
+                        display: true,
+                        text: 'Category'
+                      }
+                    }
+                  }
+                }} 
+              />}
             </Box>
           </Paper>
         </Grid>
@@ -251,4 +292,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

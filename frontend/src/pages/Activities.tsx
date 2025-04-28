@@ -150,6 +150,7 @@ const Activities: React.FC = () => {
   const fetchActivities = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params: Record<string, any> = {
         page,
         limit: itemsPerPage
@@ -167,12 +168,13 @@ const Activities: React.FC = () => {
         }
       );
       
-      setActivities(response.data.activities);
-      setTotalPages(Math.ceil(response.data.total / itemsPerPage));
+      setActivities(response.data.activities || []);
+      setTotalPages(response.data.totalPages || 1);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching activities:', err);
       setError('Failed to load activities. Please try again later.');
+      setActivities([]);  // Ensure activities is always an array
       setLoading(false);
     }
   };
@@ -541,4 +543,4 @@ const Activities: React.FC = () => {
   );
 };
 
-export default Activities; 
+export default Activities;

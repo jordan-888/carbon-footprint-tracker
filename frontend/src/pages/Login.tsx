@@ -37,8 +37,10 @@ const Login: React.FC = () => {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       try {
-        await login(values.email, values.password);
-        navigate('/');
+        const success = await login(values.email, values.password);
+        if (success) {
+          navigate('/');
+        }
       } catch (err) {
         setError('Invalid email or password');
       }

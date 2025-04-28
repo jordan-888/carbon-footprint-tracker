@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 const validationSchema = yup.object({
   name: yup
     .string()
+    .min(1, 'Name is required')
     .required('Name is required'),
   email: yup
     .string()
@@ -48,8 +49,8 @@ const Register: React.FC = () => {
       try {
         await register(values.name, values.email, values.password);
         navigate('/');
-      } catch (err) {
-        setError('Registration failed. Please try again.');
+      } catch (err: any) {
+        setError(err.message || 'Registration failed. Please try again.');
       }
     },
   });
@@ -151,4 +152,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register; 
+export default Register;
