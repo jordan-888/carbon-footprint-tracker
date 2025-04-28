@@ -1,1 +1,16 @@
- 
+ # Ignore node_modules, build output, and other files not needed for Docker builds
+node_modules
+build
+dist
+.cache
+*.log
+*.env
+.git
+.gitignore
+Dockerfile*
+README.md
+.vscode
+.idea
+coverage
+npm-debug.log
+yarn.lock

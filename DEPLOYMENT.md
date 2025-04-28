@@ -1,5 +1,10 @@
 # Carbon Tracker Deployment Guide
 
+## Recent Updates (2025-04)
+
+- UI/UX overhaul: Dashboard and authentication pages redesigned with modern glassmorphism, animated gradients, and improved responsiveness.
+- No changes to deployment steps, but ensure you rebuild the frontend container to see UI changes.
+
 This guide covers the deployment process for the Carbon Tracker application.
 
 ## Architecture Overview

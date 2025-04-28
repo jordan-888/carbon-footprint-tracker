@@ -162,6 +162,63 @@ const Dashboard: React.FC = () => {
     };
   };
 
+  // Animated gradient background CSS
+  const dashboardBg = {
+    minHeight: '100vh',
+    width: '100%',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    zIndex: -1,
+    background: 'linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%)', // softer blue-white gradient
+    backgroundSize: '400% 400%',
+    animation: 'gradientBG 18s ease infinite',
+    overflow: 'hidden',
+  };
+
+  const vignetteOverlay = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100vh',
+    pointerEvents: 'none',
+    zIndex: -1,
+    background: 'radial-gradient(ellipse at center, rgba(220,220,255,0.15) 0%, rgba(30,60,114,0.03) 70%, rgba(30,60,114,0.12) 100%)',
+  };
+
+  const glassCard = {
+    backdropFilter: 'blur(16px) saturate(180%)',
+    background: 'rgba(255,255,255,0.55)',
+    borderRadius: '28px',
+    border: '1.5px solid rgba(200,200,255,0.21)',
+    boxShadow: '0 8px 32px 0 rgba(31,38,135,0.13)',
+    padding: '2.5rem',
+    marginBottom: '2rem',
+  };
+
+  const sectionCard = {
+    ...glassCard,
+    background: 'rgba(255,255,255,0.85)',
+    boxShadow: '0 2px 16px 0 rgba(30,60,114,0.07)',
+    border: '1.5px solid rgba(210,220,255,0.18)',
+    padding: '2rem',
+  };
+
+  // Add keyframes for gradient animation
+  const gradientKeyframes = `@keyframes gradientBG {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+  }`;
+
+  if (typeof document !== 'undefined' && !document.getElementById('dashboard-gradient-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'dashboard-gradient-keyframes';
+    style.innerHTML = gradientKeyframes;
+    document.head.appendChild(style);
+  }
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -179,115 +236,85 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
-      
-      {/* Carbon Footprint Overview */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>
-              Total Carbon Footprint
+    <Box sx={{ minHeight: '100vh', width: '100%', position: 'relative', overflowX: 'clip', overflowY: 'auto' }}>
+      {/* Animated gradient background */}
+      <Box sx={dashboardBg} />
+      <Box sx={vignetteOverlay} />
+      {/* Main glassmorphic card */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', minHeight: '100vh', pt: 8, pb: 6, width: '100%', overflowX: 'clip' }}>
+        <Box sx={{ width: '100%', maxWidth: 900, px: { xs: 1, sm: 2 }, overflow: 'hidden' }}>
+          <Paper elevation={0} sx={glassCard}>
+            <Typography variant="h3" fontWeight={700} sx={{ mb: 2, color: '#2a5298', letterSpacing: 1, textShadow: '0 2px 12px #e0eafc99' }}>
+              Dashboard
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
-              <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                <CircularProgress
-                  variant="determinate"
-                  value={100}
-                  size={120}
-                  thickness={4}
-                  sx={{ color: 'grey.200' }}
-                />
-                <CircularProgress
-                  variant="determinate"
-                  value={70}
-                  size={120}
-                  thickness={4}
-                  sx={{ position: 'absolute', color: 'primary.main' }}
-                />
-                <Box
-                  sx={{
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
-                    position: 'absolute',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Typography variant="h4" component="div" color="text.secondary">
+            <Divider sx={{ mb: 3, background: 'rgba(30,60,114,0.10)' }} />
+            {/* Carbon Footprint Overview */}
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Card elevation={0} sx={{ ...sectionCard, mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 220 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <TrendingDownIcon sx={{ fontSize: 38, color: 'success.main', mr: 1, filter: 'drop-shadow(0 2px 8px #2ecc40aa)' }} />
+                    <Typography variant="h5" fontWeight={600} gutterBottom sx={{ color: '#2ecc40' }}>
+                      Total Carbon Footprint
+                    </Typography>
+                  </Box>
+                  <Typography variant="h2" fontWeight={700} sx={{ color: '#2a5298', letterSpacing: 1, mb: 1, textShadow: '0 2px 8px #a1c4fd33' }}>
                     {carbonData?.total.value.toFixed(1)} {carbonData?.total.unit}
                   </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Paper>
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>
-              Carbon Footprint by Category
-            </Typography>
-            <Box sx={{ height: '200px' }}>
-              {getChartData() && <Line 
-                data={getChartData()!} 
-                options={{
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      title: {
-                        display: true,
-                        text: 'kgCO2e'
-                      }
-                    },
-                    x: {
-                      title: {
-                        display: true,
-                        text: 'Category'
-                      }
-                    }
-                  }
-                }} 
-              />}
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
-      
-      {/* Recent Activities */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Recent Activities
-        </Typography>
-        <List>
-          {recentActivities.length > 0 ? (
-            recentActivities.map((activity, index) => (
-              <React.Fragment key={activity._id}>
-                <ListItem>
-                  <Box sx={{ mr: 2 }}>
-                    {getActivityIcon(activity.type)}
+                </Card>
+                <Card elevation={0} sx={sectionCard}>
+                  <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#f39c12' }}>
+                    <TimelineIcon sx={{ mr: 1, color: '#f39c12' }} /> Carbon Footprint by Category
+                  </Typography>
+                  <Box sx={{ height: 200 }}>
+                    {getChartData() && <Line 
+                      data={getChartData()!} 
+                      options={{ 
+                        maintainAspectRatio: false, 
+                        plugins: { legend: { display: false } },
+                        scales: {
+                          y: { beginAtZero: true, grid: { color: 'rgba(30,60,114,0.07)' } },
+                          x: { grid: { color: 'rgba(30,60,114,0.07)' } }
+                        }
+                      }} 
+                    />}
                   </Box>
-                  <ListItemText
-                    primary={activity.description}
-                    secondary={`${activity.amount.value} ${activity.amount.unit} - ${activity.carbonFootprint.value.toFixed(2)} ${activity.carbonFootprint.unit} - ${format(new Date(activity.date), 'MMM d, yyyy')}`}
-                  />
-                </ListItem>
-                {index < recentActivities.length - 1 && <Divider />}
-              </React.Fragment>
-            ))
-          ) : (
-            <ListItem>
-              <ListItemText primary="No activities recorded yet" />
-            </ListItem>
-          )}
-        </List>
-      </Paper>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Card elevation={0} sx={sectionCard}>
+                  <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2a5298' }}>
+                    <TrendingUpIcon sx={{ mr: 1, color: '#2a5298' }} /> Recent Activities
+                  </Typography>
+                  <List sx={{ maxHeight: 330, overflowY: 'auto', pr: 1 }}>
+                    {Array.isArray(recentActivities) && recentActivities.length === 0 ? (
+                      <ListItem>
+                        <ListItemText primary={<Typography color="textSecondary">No recent activities.</Typography>} />
+                      </ListItem>
+                    ) : (
+                      Array.isArray(recentActivities) ? recentActivities.map((activity) => (
+                        <ListItem key={activity._id} sx={{ mb: 1, borderRadius: 2, background: 'rgba(245,248,255,0.65)', boxShadow: '0 2px 8px 0 rgba(30,60,114,0.06)' }}>
+                          <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
+                            {getActivityIcon(activity.type)}
+                          </Box>
+                          <ListItemText
+                            primary={<Typography fontWeight={600} sx={{ color: '#2a5298' }}>{activity.description}</Typography>}
+                            secondary={
+                              <Typography component="span" variant="caption" color="#888">
+                                {format(new Date(activity.date), 'dd MMM yyyy')} • {activity.type} • {activity.amount.value} {activity.amount.unit}
+                              </Typography>
+                            }
+                          />
+                        </ListItem>
+                      )) : null
+                    )}
+                  </List>
+                </Card>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Box>
+      </Box>
     </Box>
   );
 };

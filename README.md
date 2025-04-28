@@ -1,5 +1,11 @@
 # Carbon Footprint Tracker
 
+## Recent Updates (2025-04)
+
+- Major UI/UX redesign: Dashboard, Login, and Register pages now feature glassmorphism, animated backgrounds, improved layout, and modern color palette.
+- Fixed horizontal scroll and layout issues for a stable, responsive experience.
+- Enhanced accessibility and visual consistency across all major pages.
+
 A modern web application to track and analyze your carbon footprint with an intuitive user interface and comprehensive data visualization.
 
 ## Features
